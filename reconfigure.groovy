@@ -17,7 +17,7 @@ def nifi = new RESTClient("http://$host:$port/nifi-api/")
 
 println 'Looking up a component to update...'
 def resp = nifi.get(
-    path: 'controller/search-results',
+    path: 'flow/search-results',
     query: [q: processorName]
 )
 assert resp.status == 200
@@ -29,7 +29,7 @@ def processGroup= resp.data.searchResultsDTO.processorResults[0].groupId
 println "Found the component, id/group:  $processorId/$processGroup"
 
 println 'Preparing to update the flow state...'
-resp = nifi.get(path: 'controller/revision')
+resp = nifi.get(path: "processors/$processorId")
 assert resp.status == 200
 
 // stop the processor before we can update it
@@ -40,13 +40,13 @@ builder {
         clientId 'my awesome script'
         version resp.data.revision.version
     }
-    processor {
+    component {
         id "$processorId"
         state "STOPPED"
     }
 }
 resp = nifi.put(
-    path: "controller/process-groups/$processGroup/processors/$processorId",
+    path: "processors/$processorId",
     body: builder.toPrettyString(),
     requestContentType: JSON
 )
@@ -60,7 +60,7 @@ builder {
         clientId 'my awesome script'
         version resp.data.revision.version
     }
-    processor {
+    component {
         id "$processorId"
         config {
             properties {
@@ -74,7 +74,7 @@ builder {
 println "Updating processor...\n${builder.toPrettyString()}"
 
 resp = nifi.put(
-    path: "controller/process-groups/$processGroup/processors/$processorId",
+    path: "processors/$processorId",
     body: builder.toPrettyString(),
     requestContentType: JSON
 )
@@ -91,13 +91,13 @@ builder {
         clientId 'my awesome script'
         version resp.data.revision.version
     }
-    processor {
+    component {
         id "$processorId"
         state "RUNNING"
     }
 }
 resp = nifi.put(
-    path: "controller/process-groups/$processGroup/processors/$processorId",
+    path: "processors/$processorId",
     body: builder.toPrettyString(),
     requestContentType: JSON
 )
